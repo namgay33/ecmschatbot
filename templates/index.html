@@ -7,7 +7,7 @@
         body {
             font-family: Arial, sans-serif;
             background-color: #f9f9f9;
-            margin: 0 5% 5% 0;
+            margin: 0;
             padding: 0;
             display: flex;
             justify-content: right;
@@ -18,6 +18,8 @@
 
         #chatbox {
             width: 400px;
+            height: 0; /* Start with height 0 */
+            opacity: 0; /* Start with opacity 0 */
             border: 1px solid #ccc;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
@@ -25,7 +27,15 @@
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            height: 500px;
+            position: absolute;
+            bottom: 70px; /* Position above the icon */
+            right: 20px; /* Adjust as needed */
+            transition: height 2s ease, opacity 2s ease; /* Animate height and opacity */
+        }
+
+        #chatbox.open {
+            height: 500px; /* Target height */
+            opacity: 1; /* Target opacity */
         }
 
         #chatbox header {
@@ -238,9 +248,32 @@
             border-radius: 50%;
             transform: scale(1.1);
         }
+
+        #chatIcon {
+            width: 50px;
+            height: 50px;
+            background: blue;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            font-size: 24px;
+            transition: background 0.3s, transform 0.3s;
+        }
+
+        #chatIcon:hover {
+            background: darkblue;
+            transform: scale(1.1);
+        }
     </style>
 </head>
 <body>
+    <div id="chatIcon" onclick="toggleChatbox()">💬</div>
     <div id="chatbox">
         <header>Electronic Customs Management System</header>
         <div class="chatlogs" id="chatlogs">
@@ -264,6 +297,21 @@
         let typingInterval;
         let stopTypingFlag = false;
         let recognition;
+
+        function toggleChatbox() {
+            const chatbox = document.getElementById("chatbox");
+            if (chatbox.classList.contains("open")) {
+                chatbox.classList.remove("open");
+                setTimeout(() => {
+                    chatbox.style.display = "none";
+                }, 500); // Wait for the height transition to complete before hiding
+            } else {
+                chatbox.style.display = "flex";
+                setTimeout(() => {
+                    chatbox.classList.add("open");
+                }, 10); // Short delay to ensure display is applied before starting transition
+            }
+        }
 
         function typeMessage(message, callback) {
             let i = 0;
@@ -410,9 +458,13 @@
             };
 
             recognition.onerror = function(event) {
-                console.error('Voice recognition error: ', event.error);
-            };
-
+    console.log("Voice recognition error:", event.error);
+    if (event.error === "network") {
+        alert("Network error: Please check your internet connection or you may try using a different browser.");
+    }
+    button.removeClass("active");
+    button.text("🎤");
+};
             recognition.onend = function() {
                 console.log('Voice recognition ended.');
                 $("#voiceSearchButton").removeClass("active");
