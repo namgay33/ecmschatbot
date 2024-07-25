@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Electronic Customs Management Systems</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            margin: 0 5% 5% 0;
+            padding: 0;
+            display: flex;
+            justify-content: right;
+            align-items: end;
+            height: 100vh;
+            position: relative;
+        }
+
+        #chatbox {
+            width: 400px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            background: #fff;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 500px;
+        }
+
+        #chatbox header {
+            background: blue;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            font-size: 18px;
+            border-bottom: 1px solid #ccc;
+            font-family: Arial, sans-serif;
+        }
+
+        #chatbox .chatlogs {
+            padding: 16px;
+            padding-left: 10%;
+            flex: 1;
+            overflow-y: scroll;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #chatbox .chatlogs .message {
+            margin: 10px 0;
+            opacity: 0;
+            animation: fadeIn 0.5s forwards;
+        }
+
+        #chatbox .chatlogs .user {
+            text-align: right;
+            color: black;
+            font-size: 12px;
+            font-family: Arial, sans-serif;
+        }
+
+        #chatbox .chatlogs .bot-wrapper {
+            padding-right: 10%;
+            position: relative;
+        }
+
+        #chatbox .chatlogs .greeting {
+            text-align: center;
+            color: black;
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-family: Arial, sans-serif;
+            position: relative;
+        }
+
+        #chatbox .chatlogs .greeting .greeting-bot {
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+
+        #chatbox .chatlogs .greeting .greeting-image {
+            width: 200px;
+            height: 200px;
+            object-fit: cover;
+            display: inline-block;
+            vertical-align: middle;
+            margin-left: 10px;
+        }
+
+        #chatbox .chatlogs .bot {
+            text-align: left;
+            color: black;
+            background-color: #e1f5fe;
+            padding: 5%;
+            border-radius: 10px;
+            font-size: 12px;
+            font-family: Arial, sans-serif;
+            position: relative;
+            display: inline-block;
+        }
+
+        #chatbox .chatlogs .bot::after {
+            content: "";
+            position: absolute;
+            bottom: -4px;
+            left: -6px;
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-top: 15px solid #e1f5fe;
+            border-bottom: 0;
+            transform: rotate(-63deg);
+            border-radius: 7px;
+        }
+
+        #chatbox .chatlogs .responder-image {
+            position: absolute;
+            bottom: -20px;
+            left: -34px;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 2px solid #e1f5fe;
+            object-fit: cover;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.5); }
+        }
+
+        .loader {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            margin: 2px;
+            background-color: green;
+            border-radius: 50%;
+            animation: bounce 1s infinite;
+        }
+
+        .loader:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .loader:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        #chatbox .input {
+            display: flex;
+            border-top: 1px solid #ccc;
+            padding: 5px;
+            background: #f1f1f1;
+        }
+
+        #chatbox .input input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px 0 0 5px;
+            outline: none;
+            font-size: 12px;
+            font-family: Arial, sans-serif;
+        }
+
+        #chatbox .input button {
+            padding: 10px;
+            border: 1px solid #4CAF50;
+            background: #4CAF50;
+            color: white;
+            border-radius: 0 5px 5px 0;
+            cursor: pointer;
+            font-size: 14px;
+            font-family: Arial, sans-serif;
+        }
+
+        #chatbox .input button:hover {
+            background: #45a049;
+        }
+
+        .stopButton {
+            background: red !important;
+        }
+
+        #highlighted-questions {
+            padding: 10px;
+            border-top: 1px solid #ccc;
+            background: #f9f9f9;
+            border-bottom: 1px solid #ccc;
+            display: none;
+        }
+
+        #highlighted-questions button {
+            display: inline-block;
+            padding: 5px 10px;
+            margin: 5px 0;
+            border: none;
+            background: #4CAF50;
+            color: white;
+            font-size: 12px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-family: Arial, sans-serif;
+        }
+
+        #highlighted-questions button:hover {
+            background: #45a049;
+        }
+
+        #voiceSearchButton {
+            padding: 10px;
+            border: 1px solid #4CAF50;
+            background: #4CAF50;
+            color: white;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 14px;
+            font-family: Arial, sans-serif;
+            margin-left: 5px;
+            transition: background 0.3s, transform 0.3s;
+        }
+
+        #voiceSearchButton:hover {
+            background: red;
+        }
+
+        #voiceSearchButton.active {
+            background: red;
+            border-radius: 50%;
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body>
+    <div id="chatbox">
+        <header>Electronic Customs Management System</header>
+        <div class="chatlogs" id="chatlogs">
+            <!-- Messages will be dynamically added here -->
+        </div>
+        <div id="highlighted-questions">
+            <button onclick="sendHighlightedQuestion('What is eCMS?')">⚖️ What is eCMS?</button>
+            <button onclick="sendHighlightedQuestion('How to register in eCMS?')">📝 How to register in eCMS?</button>
+            <button onclick="sendHighlightedQuestion('How is eCMS related to BTFN?')">💰 How is eCMS related to BTFN?</button>
+        </div>
+        <div class="input">
+            <input id="userInput" type="text" placeholder="Type your message here...">
+            <button id="sendStopButton" onclick="toggleSendStop()">Send</button>
+            <button id="voiceSearchButton" onmousedown="startVoiceRecognition()" onmouseup="stopVoiceRecognition()">🎤</button>
+        </div>
+    </div>
+    <script>
+        const responderImageUrl = "{{ url_for('static', filename='images/responder.jpg') }}";
+        const greetingImageUrl = "{{ url_for('static', filename='images/greetingAI.jpg') }}";
+
+        let typingInterval;
+        let stopTypingFlag = false;
+        let recognition;
+
+        function typeMessage(message, callback) {
+            let i = 0;
+            const typingSpeed = 20;
+            const typingMessage = $(
+                `<div class="message bot-wrapper">
+                    <div class="bot"></div>
+                    <img src="${responderImageUrl}" class="responder-image" alt="Responder Image">
+                </div>`
+            );
+            $("#chatlogs").append(typingMessage);
+
+            typingInterval = setInterval(() => {
+                if (i < message.length && !stopTypingFlag) {
+                    typingMessage.find(".bot").text("" + message.substring(0, i + 1));
+                    scrollToBottom();
+                    i++;
+                } else {
+                    clearInterval(typingInterval);
+                    if (callback) callback();
+                }
+            }, typingSpeed);
+        }
+
+        function stopTyping() {
+            stopTypingFlag = true;
+            clearInterval(typingInterval);
+            setSendButton();
+        }
+
+        function showGreeting() {
+            const greetingMessage = "Welcome to eCMS chat! How can I assist you today?";
+            const greetingHTML = $(
+                `<div class="greeting">
+                    <div class="greeting-bot">${greetingMessage}</div>
+                    <img src="${greetingImageUrl}" class="greeting-image" alt="Greeting Image">
+                </div>`
+            );
+            $("#chatlogs").append(greetingHTML);
+            scrollToBottom();
+            $("#highlighted-questions").show();
+        }
+
+        function showLoadingAnimation() {
+            const loadingMessage = $('<div class="message bot-wrapper"><div class="bot loading"></div></div>');
+            loadingMessage.find(".bot").append('<div class="loader"></div>');
+            loadingMessage.find(".bot").append('<div class="loader"></div>');
+            loadingMessage.find(".bot").append('<div class="loader"></div>');
+            $("#chatlogs").append(loadingMessage);
+            scrollToBottom();
+            setTimeout(() => {
+                loadingMessage.remove();
+            }, 3000);
+        }
+
+        function scrollToBottom() {
+            const chatlogs = document.getElementById("chatlogs");
+            chatlogs.scrollTop = chatlogs.scrollHeight;
+        }
+
+        function sendMessage() {
+            const userInput = $("#userInput").val();
+            if (userInput.trim() !== "") {
+                $("#userInput").val("");
+                const userMessageHTML = `<div class="message user">${userInput}</div>`;
+                $("#chatlogs").append(userMessageHTML);
+                scrollToBottom();
+
+                showLoadingAnimation();
+
+                setTimeout(() => {
+                    $.get("/get", { msg: userInput }, function(data) {
+                        stopTypingFlag = false;
+                        typeMessage(data.message, function() {
+                            scrollToBottom();
+                            setSendButton();
+                        });
+                    }).fail(function() {
+                        const errorMessage = "Sorry, there was an error fetching the response.";
+                        typeMessage(errorMessage, function() {
+                            scrollToBottom();
+                            setSendButton();
+                        });
+                    });
+                }, 3000); // Simulate loading delay
+            }
+        }
+
+        function sendHighlightedQuestion(question) {
+            $("#userInput").val(question);
+            toggleSendStop();
+        }
+
+        function setSendButton() {
+            const button = $("#sendStopButton");
+            button.text("Send");
+            button.removeClass("stopButton");
+        }
+
+        function setStopButton() {
+            const button = $("#sendStopButton");
+            button.text("Stop");
+            button.addClass("stopButton");
+        }
+
+        function toggleSendStop() {
+            const userInput = $("#userInput").val();
+            if (userInput.trim() === "") {
+                setSendButton();
+                stopTyping();
+                return;
+            }
+            const button = $("#sendStopButton");
+            if (button.text() === "Send") {
+                setStopButton();
+                sendMessage();
+            } else {
+                setSendButton();
+                stopTyping();
+            }
+        }
+
+        function startVoiceRecognition() {
+            if (!('webkitSpeechRecognition' in window)) {
+                alert("Sorry, your browser doesn't support speech recognition.");
+                return;
+            }
+
+            recognition = new webkitSpeechRecognition();
+            recognition.lang = 'en-US';
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+
+            recognition.onstart = function() {
+                console.log('Voice recognition started.');
+                $("#voiceSearchButton").addClass("active");
+            };
+
+            recognition.onresult = function(event) {
+                const transcript = event.results[0][0].transcript;
+                console.log('Voice Input: ', transcript);
+                $("#userInput").val(transcript);
+                toggleSendStop();
+            };
+
+            recognition.onerror = function(event) {
+                console.error('Voice recognition error: ', event.error);
+            };
+
+            recognition.onend = function() {
+                console.log('Voice recognition ended.');
+                $("#voiceSearchButton").removeClass("active");
+            };
+
+            recognition.start();
+        }
+
+        function stopVoiceRecognition() {
+            if (recognition) {
+                recognition.stop();
+            }
+            $("#voiceSearchButton").removeClass("active");
+        }
+
+        $(document).ready(function() {
+            showGreeting();
+            $("#userInput").keypress(function(event) {
+                if (event.which == 13) {
+                    event.preventDefault();
+                    toggleSendStop();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
