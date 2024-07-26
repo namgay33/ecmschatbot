@@ -3,8 +3,9 @@
 <head>
     <title>Electronic Customs Management Systems</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
     <style>
-        body {
+         body {
             font-family: Arial, sans-serif;
             background-color: #f9f9f9;
             margin: 0;
@@ -233,20 +234,24 @@
             color: white;
             border-radius: 50%;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 24px; /* Increased font size for better visibility */
             font-family: Arial, sans-serif;
             margin-left: 5px;
             transition: background 0.3s, transform 0.3s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
-        #voiceSearchButton:hover {
+        .voiceSearchButton #voiceSearchButton:hover {
             background: red;
+            color: red;
         }
 
-        #voiceSearchButton.active {
+        .voiceSearchButton #voiceSearchButton.active {
             background: red;
             border-radius: 50%;
-            transform: scale(1.1);
+            transform: scale(1);
         }
 
         #chatIcon {
@@ -270,6 +275,23 @@
             background: darkblue;
             transform: scale(1.1);
         }
+
+        #tryAgainChat {
+            display: none;
+            padding: 10px;
+            border: 1px solid #4CAF50;
+            background: #4CAF50;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-family: Arial, sans-serif;
+            margin: 10px;
+        }
+
+        #tryAgainChat:hover {
+            background: #45a049;
+        }
     </style>
 </head>
 <body>
@@ -287,8 +309,11 @@
         <div class="input">
             <input id="userInput" type="text" placeholder="Type your message here...">
             <button id="sendStopButton" onclick="toggleSendStop()">Send</button>
-            <button id="voiceSearchButton" onmousedown="startVoiceRecognition()" onmouseup="stopVoiceRecognition()">🎤</button>
+            <div class="voiceSearchButton"><button id="voiceSearchButton" onmousedown="startVoiceRecognition()" onmouseup="stopVoiceRecognition()">
+                <i class="material-icons">mic</i>
+            </button></div>
         </div>
+        <button id="tryAgainChat" onclick="restartChat()">Try Again</button>
     </div>
     <script>
         const responderImageUrl = "{{ url_for('static', filename='images/responder.jpg') }}";
@@ -297,6 +322,15 @@
         let typingInterval;
         let stopTypingFlag = false;
         let recognition;
+
+        // Extended list of bad words including additional words
+        const badWords = [
+            'fuck', 'shit', 'bitch', 'cunt', 'asshole', 'motherfucker', 
+            'faggot', 'dick', 'pussy', 'cock', 'nigger', 'nigga', 
+            'slut', 'whore', 'bastard', 'cocksucker', 'dildo', 'piss',
+            'j', 'jdha', 'long', 'thu', 'thu zai', 'long zai','ediot', 'ass',
+            'asshole','dha','da'
+        ]; // Add more as needed
 
         function toggleChatbox() {
             const chatbox = document.getElementById("chatbox");
@@ -372,8 +406,33 @@
             chatlogs.scrollTop = chatlogs.scrollHeight;
         }
 
+        function containsBadWords(text) {
+            const lowerCaseText = text.toLowerCase();
+            return badWords.some(word => lowerCaseText.includes(word));
+        }
+
+        function disableChat() {
+            $("#userInput").prop("disabled", true);
+            $("#sendStopButton").prop("disabled", true);
+            $("#voiceSearchButton").prop("disabled", true);
+        }
+
+        function enableChat() {
+            $("#userInput").prop("disabled", false);
+            $("#sendStopButton").prop("disabled", false);
+            $("#voiceSearchButton").prop("disabled", false);
+        }
+
         function sendMessage() {
             const userInput = $("#userInput").val();
+            if (containsBadWords(userInput)) {
+                $("#chatlogs").append('<div class="message bot-wrapper"><div class="bot">Your message contains inappropriate content. Please refrain from using such language.</div></div>');
+                scrollToBottom();
+                disableChat();
+                $("#tryAgainChat").show();
+                return;
+            }
+
             if (userInput.trim() !== "") {
                 $("#userInput").val("");
                 const userMessageHTML = `<div class="message user">${userInput}</div>`;
@@ -453,18 +512,25 @@
             recognition.onresult = function(event) {
                 const transcript = event.results[0][0].transcript;
                 console.log('Voice Input: ', transcript);
-                $("#userInput").val(transcript);
-                toggleSendStop();
+                if (containsBadWords(transcript)) {
+                    $("#chatlogs").append('<div class="message bot-wrapper"><div class="bot">Your message contains inappropriate content. Please refrain from using such language.</div></div>');
+                    scrollToBottom();
+                    disableChat();
+                    $("#tryAgainChat").show();
+                } else {
+                    $("#userInput").val(transcript);
+                    toggleSendStop();
+                }
             };
 
             recognition.onerror = function(event) {
-    console.log("Voice recognition error:", event.error);
-    if (event.error === "network") {
-        alert("Network error: Please check your internet connection or you may try using a different browser.");
-    }
-    button.removeClass("active");
-    button.text("🎤");
-};
+                console.log("Voice recognition error:", event.error);
+                if (event.error === "network") {
+                    alert("Network error: Please check your internet connection or you may try using a different browser.");
+                }
+                $("#voiceSearchButton").removeClass("active");
+            };
+
             recognition.onend = function() {
                 console.log('Voice recognition ended.');
                 $("#voiceSearchButton").removeClass("active");
@@ -478,6 +544,13 @@
                 recognition.stop();
             }
             $("#voiceSearchButton").removeClass("active");
+        }
+
+        function restartChat() {
+            $("#tryAgainChat").hide();
+            $("#chatlogs").empty();
+            enableChat();
+            showGreeting();
         }
 
         $(document).ready(function() {
