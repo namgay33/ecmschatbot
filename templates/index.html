@@ -5,7 +5,7 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
     <style>
-         body {
+           body {
             font-family: Arial, sans-serif;
             background-color: #f9f9f9;
             margin: 0;
@@ -328,7 +328,7 @@
             'fuck', 'shit', 'bitch', 'cunt', 'asshole', 'motherfucker', 
             'faggot', 'dick', 'pussy', 'cock', 'nigger', 'nigga', 
             'slut', 'whore', 'bastard', 'cocksucker', 'dildo', 'piss',
-            'j', 'jdha', 'long', 'thu', 'thu zai', 'long zai','ediot', 'ass',
+            'j', 'jdha', 'idiot', 'ass',
             'asshole','dha','da'
         ]; // Add more as needed
 
@@ -343,6 +343,7 @@
                 chatbox.style.display = "flex";
                 setTimeout(() => {
                     chatbox.classList.add("open");
+                    voiceGreeting(); // Call voice greeting when chatbox opens
                 }, 10); // Short delay to ensure display is applied before starting transition
             }
         }
@@ -525,9 +526,6 @@
 
             recognition.onerror = function(event) {
                 console.log("Voice recognition error:", event.error);
-                if (event.error === "network") {
-                    alert("Network error: Please check your internet connection or you may try using a different browser.");
-                }
                 $("#voiceSearchButton").removeClass("active");
             };
 
@@ -543,24 +541,25 @@
             if (recognition) {
                 recognition.stop();
             }
-            $("#voiceSearchButton").removeClass("active");
+        }
+
+        function voiceGreeting() {
+            const msg = new SpeechSynthesisUtterance("Welcome to the Electronic Customs Management System. How can I assist you today?");
+            window.speechSynthesis.speak(msg);
         }
 
         function restartChat() {
             $("#tryAgainChat").hide();
             $("#chatlogs").empty();
+            $("#userInput").val("");
             enableChat();
             showGreeting();
         }
 
+        // Initialize the chat interface
         $(document).ready(function() {
+            $("#tryAgainChat").hide();
             showGreeting();
-            $("#userInput").keypress(function(event) {
-                if (event.which == 13) {
-                    event.preventDefault();
-                    toggleSendStop();
-                }
-            });
         });
     </script>
 </body>
