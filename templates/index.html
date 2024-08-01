@@ -309,7 +309,9 @@
         <div class="input">
             <input id="userInput" type="text" placeholder="Type your message here...">
             <button id="sendStopButton" onclick="toggleSendStop()">Send</button>
-            <div class="voiceSearchButton"><button id="voiceSearchButton" onmousedown="startVoiceRecognition()" onmouseup="stopVoiceRecognition()">
+            <div class="voiceSearchButton"><button id="voiceSearchButton"
+            title="Please Hold to Speak" 
+            onmousedown="startVoiceRecognition()" onmouseup="stopVoiceRecognition()">
                 <i class="material-icons">mic</i>
             </button></div>
         </div>
