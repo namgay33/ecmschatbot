@@ -46,8 +46,8 @@ def get_response(query):
         index = np.argmax(similarities)
         similarity_score = similarities[0, index].item()
 
-        if similarity_score < 0.58:
-            response = "I am sorry! I don't have the related information. Please, contact the concerned person."
+        if similarity_score < 0.6:
+            response = "I am sorry! I don't have the related information. Please, contact with the concerned person."
         else:
             response = answers[index]
         
@@ -89,7 +89,7 @@ def get_bot_response():
             response_message = "Goodbye! Take Care <3"
             insert_chat_log(user_response, response_message)  # Insert chat log
             return {"message": response_message, "highlighted_questions": get_highlighted_questions()}
-    return {"message": "I am sorry! Contact with admin", "highlighted_questions": get_highlighted_questions()}
+    return {"message": "I am sorry! Please! Contact with the concerned person.", "highlighted_questions": get_highlighted_questions()}
 
 def get_highlighted_questions():
     return [

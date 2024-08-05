@@ -329,11 +329,7 @@
 
         // Extended list of bad words including additional words
         const badWords = [
-            'fuck', 'shit', 'bitch', 'cunt', 'asshole', 'motherfucker', 
-            'faggot', 'dick', 'pussy', 'cock', 'nigger', 'nigga', 
-            'slut', 'whore', 'bastard', 'cocksucker', 'dildo', 'piss',
-            'j', 'jdha', 'idiot', 'ass',
-            'asshole','dha','da'
+            
         ]; // Add more as needed
 
         function toggleChatbox() {
@@ -548,9 +544,10 @@
         }
 
         function voiceGreeting() {
-            const msg = new SpeechSynthesisUtterance("Welcome to the Electronic Customs Management System. How can I assist you today?");
-            window.speechSynthesis.speak(msg);
+            const audio = new Audio('static/audio/greeting.mp3');  // Adjust the path as needed
+            audio.play();
         }
+        
 
         function restartChat() {
             $("#tryAgainChat").hide();
