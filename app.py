@@ -2,9 +2,8 @@ from flask import Flask, render_template, request
 import mysql.connector
 import h5py
 import config
-# import numpy as np
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
+import numpy as np
+from sentence_transformers import SentenceTransformer, util
 import random
 
 app = Flask(__name__)
@@ -21,22 +20,14 @@ db_config = {
 # Load the .h5 model
 def load_model():
     with h5py.File('ecmschatbot_model.h5', 'r') as hf:
-        vocab = {key: i for i, key in enumerate(hf['vocabulary'])}
-        idf = hf['idf'][:]
-        tfidf_matrix = hf['tfidf_matrix'][:]
-        inputs = [i.decode('utf-8') for i in hf['inputs'][:]]
-        outputs = [o.decode('utf-8') for o in hf['outputs'][:]]
-    return vocab, idf, tfidf_matrix, inputs, outputs
+        questions_embeddings = np.array(hf['questions_embeddings'])
+        answers = [ans.decode('utf-8') for ans in hf['answers']]
+    return questions_embeddings, answers
 
-vocab, idf, tfidf_matrix, inputs, outputs = load_model()
+questions_embeddings, answers = load_model()
 
-# Initialize TF-IDF Vectorizer
-def get_tfidf_vectorizer():
-    vectorizer = TfidfVectorizer(vocabulary=vocab)
-    vectorizer.idf_ = idf
-    return vectorizer
-
-vectorizer = get_tfidf_vectorizer()
+# Initialize SentenceTransformer model
+model = SentenceTransformer('all-MiniLM-L6-v2')
 
 # Preprocess text
 def preprocess_text(text):
@@ -44,16 +35,27 @@ def preprocess_text(text):
 
 # Get response based on the query
 def get_response(query):
-    query_processed = preprocess_text(query)
-    query_tfidf = vectorizer.transform([query_processed])
-    similarities = cosine_similarity(query_tfidf, tfidf_matrix)
-    index = similarities.argmax()
-    req_tfidf = similarities[0, index]
+    # Split the query into individual questions based on semicolons
+    questions = [q.strip() for q in query.split(';')]
+
+    responses = []
+    for question in questions:
+        query_processed = preprocess_text(question)
+        query_embedding = model.encode(query_processed, convert_to_tensor=True)
+        similarities = util.pytorch_cos_sim(query_embedding, questions_embeddings)
+        index = np.argmax(similarities)
+        similarity_score = similarities[0, index].item()
+
+        if similarity_score < 0.58:
+            response = "I am sorry! I don't have the related information. Please, contact the concerned person."
+        else:
+            response = answers[index]
+        
+        # Format response for the question
+        responses.append(f"Question: {question}\nResponse: {response}\n")
     
-    if req_tfidf < 0.58:
-        return "I am sorry! I don't have the related information. Please, contact the concerned person."
-    else:
-        return outputs[index]
+    return "\n".join(responses)  # Join all responses into a single string
+
 
 def greet(sentence):
     GREET_INPUTS = ("hello", "hi", "kuzu zangpo la", "kuzu")
@@ -129,4 +131,3 @@ if __name__ == '__main__':
     port = 5000 + random.randint(0, 999)
     url = "http://127.0.0.1:{0}".format(port)
     app.run(use_reloader=False, debug=True, port=port)
-
