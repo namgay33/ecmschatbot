@@ -311,11 +311,13 @@
         <div class="input">
             <input id="userInput" type="text" placeholder="Type your message here...">
             <button id="sendStopButton" onclick="toggleSendStop()">Send</button>
-            <div class="voiceSearchButton"><button id="voiceSearchButton"
-            title="Please Hold to Speak" 
-            onmousedown="startVoiceRecognition()" onmouseup="stopVoiceRecognition()">
-                <i class="material-icons">mic</i>
-            </button></div>
+            <div class="voiceSearchButton">
+                <button id="voiceSearchButton"
+                title="Please Hold to Speak" 
+                onmousedown="startVoiceRecognition()" onmouseup="stopVoiceRecognition()">
+                    <i class="material-icons">mic</i>
+                </button>
+            </div>
         </div>
         <button id="tryAgainChat" onclick="restartChat()">Try Again</button>
     </div>
@@ -326,11 +328,10 @@
         let typingInterval;
         let stopTypingFlag = false;
         let recognition;
+        let loadingMessage;
 
         // Extended list of bad words including additional words
-        const badWords = [
-            
-        ]; // Add more as needed
+        const badWords = []; // Add more as needed
 
         function toggleChatbox() {
             const chatbox = document.getElementById("chatbox");
@@ -391,15 +392,19 @@
         }
 
         function showLoadingAnimation() {
-            const loadingMessage = $('<div class="message bot-wrapper"><div class="bot loading"></div></div>');
+            loadingMessage = $('<div class="message bot-wrapper"><div class="bot loading"></div></div>');
             loadingMessage.find(".bot").append('<div class="loader"></div>');
             loadingMessage.find(".bot").append('<div class="loader"></div>');
             loadingMessage.find(".bot").append('<div class="loader"></div>');
             $("#chatlogs").append(loadingMessage);
             scrollToBottom();
-            setTimeout(() => {
+        }
+
+        function removeLoadingAnimation() {
+            if (loadingMessage) {
                 loadingMessage.remove();
-            }, 3000);
+                loadingMessage = null;
+            }
         }
 
         function scrollToBottom() {
@@ -445,12 +450,14 @@
                 setTimeout(() => {
                     $.get("/get", { msg: userInput }, function(data) {
                         stopTypingFlag = false;
+                        removeLoadingAnimation();
                         typeMessage(data.message, function() {
                             scrollToBottom();
                             setSendButton();
                         });
                     }).fail(function() {
                         const errorMessage = "Sorry, there was an error fetching the response.";
+                        removeLoadingAnimation();
                         typeMessage(errorMessage, function() {
                             scrollToBottom();
                             setSendButton();
@@ -496,7 +503,7 @@
 
         function startVoiceRecognition() {
             if (!('webkitSpeechRecognition' in window)) {
-                alert("Sorry, your browser doesn't support speech recognition.");
+                alert("Sorry, your browser doesn't support speech recognition. Consider using a different browser.");
                 return;
             }
 
@@ -512,21 +519,12 @@
 
             recognition.onresult = function(event) {
                 const transcript = event.results[0][0].transcript;
-                console.log('Voice Input: ', transcript);
-                if (containsBadWords(transcript)) {
-                    $("#chatlogs").append('<div class="message bot-wrapper"><div class="bot">Your message contains inappropriate content. Please refrain from using such language.</div></div>');
-                    scrollToBottom();
-                    disableChat();
-                    $("#tryAgainChat").show();
-                } else {
-                    $("#userInput").val(transcript);
-                    toggleSendStop();
-                }
+                $("#userInput").val(transcript);
+                toggleSendStop();
             };
 
             recognition.onerror = function(event) {
-                console.log("Voice recognition error:", event.error);
-                $("#voiceSearchButton").removeClass("active");
+                console.error('Voice recognition error', event.error);
             };
 
             recognition.onend = function() {
@@ -540,27 +538,28 @@
         function stopVoiceRecognition() {
             if (recognition) {
                 recognition.stop();
+                $("#voiceSearchButton").removeClass("active");
             }
         }
 
         function voiceGreeting() {
-            const audio = new Audio('static/audio/greeting.mp3');  // Adjust the path as needed
-            audio.play();
+            const greeting = new Audio("{{ url_for('static', filename='audio/greeting.mp3') }}");
+            greeting.play().catch(error => {
+                console.error('Failed to play greeting:', error);
+            });
         }
-        
 
         function restartChat() {
-            $("#tryAgainChat").hide();
             $("#chatlogs").empty();
             $("#userInput").val("");
             enableChat();
+            $("#tryAgainChat").hide();
             showGreeting();
         }
 
-        // Initialize the chat interface
         $(document).ready(function() {
-            $("#tryAgainChat").hide();
-            showGreeting();
+            restartChat();
+            $("#highlighted-questions").show(); // Show highlighted questions by default
         });
     </script>
 </body>
