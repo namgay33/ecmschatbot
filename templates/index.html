@@ -359,10 +359,11 @@
                 </div>`
             );
             $("#chatlogs").append(typingMessage);
-
+        
             typingInterval = setInterval(() => {
                 if (i < message.length && !stopTypingFlag) {
-                    typingMessage.find(".bot").text("" + message.substring(0, i + 1));
+                    // Instead of just setting text, use HTML to properly format the response
+                    typingMessage.find(".bot").html(message.substring(0, i + 1));
                     scrollToBottom();
                     i++;
                 } else {
@@ -371,6 +372,7 @@
                 }
             }, typingSpeed);
         }
+        
 
         function stopTyping() {
             stopTypingFlag = true;

@@ -52,7 +52,7 @@ def get_response(query):
             response = answers[index]
         
         # Format response for the question
-        responses.append(f"Question: {question}\nResponse: {response}\n")
+        responses.append(f"<p><strong>Question:</strong> {question}<br><strong>Response:</strong> {response}</p>")
     
     return "\n".join(responses)  # Join all responses into a single string
 
